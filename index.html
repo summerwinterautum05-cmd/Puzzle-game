@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Puzzle Game 🎀</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #ff9a9e, #fad0c4);
+    text-align: center;
+    overflow: hidden;
+}
+
+/* START SCREEN */
+#startScreen {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+h1 {
+    color: white;
+    text-shadow: 2px 2px 5px #000;
+}
+
+.start-btn {
+    padding: 15px 40px;
+    font-size: 22px;
+    border: none;
+    border-radius: 20px;
+    background: #ff4d6d;
+    color: white;
+    cursor: pointer;
+}
+
+/* GAME */
+#gameScreen {
+    display: none;
+    padding: 20px;
+}
+
+#game {
+    width: 310px;
+    height: 310px;
+    margin: 20px auto;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 5px;
+}
+
+.tile {
+    width: 100px;
+    height: 100px;
+    background: white;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.empty {
+    background: transparent;
+}
+
+#message {
+    font-size: 24px;
+    color: green;
+    font-weight: bold;
+    margin-top: 15px;
+}
+</style>
+</head>
+
+<body>
+
+<!-- START SCREEN -->
+<div id="startScreen">
+    <h1>🎀 Puzzle Game 🎀</h1>
+    <button class="start-btn" onclick="startGame()">START ✨</button>
+</div>
+
+<!-- GAME SCREEN -->
+<div id="gameScreen">
+    <h1>Puzzle Time 🎮</h1>
+    <div id="game"></div>
+    <button onclick="shuffle()">Shuffle 🔀</button>
+    <div id="message"></div>
+</div>
+
+<!-- MUSIC -->
+<audio id="bgMusic" loop>
+    <source src="Puzzle.mp3" type="audio/mpeg">
+</audio>
+
+<audio id="birthdayMusic">
+    <source src="Birthday.mp3" type="audio/mpeg">
+</audio>
+
+<!-- CONFETTI (IMPORTANT: MUST BE BEFORE YOUR SCRIPT) -->
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+<script>
+const size = 3;
+let tiles = [];
+
+/* START GAME */
+function startGame() {
+    document.getElementById("startScreen").style.display = "none";
+    document.getElementById("gameScreen").style.display = "block";
+
+    document.getElementById("bgMusic").play();
+
+    createTiles();
+    shuffle();
+}
+
+/* CREATE */
+function createTiles() {
+    tiles = [];
+    for (let i = 1; i < size * size; i++) {
+        tiles.push(i);
+    }
+    tiles.push(null);
+}
+
+/* RENDER */
+function render() {
+    const game = document.getElementById("game");
+    game.innerHTML = "";
+
+    tiles.forEach((tile, index) => {
+        const div = document.createElement("div");
+        div.classList.add("tile");
+
+        if (tile === null) {
+            div.classList.add("empty");
+        } else {
+            div.innerText = tile;
+            div.onclick = () => move(index);
+        }
+
+        game.appendChild(div);
+    });
+
+    checkWin();
+}
+
+/* MOVE */
+function move(index) {
+    const emptyIndex = tiles.indexOf(null);
+
+    const emptyRow = Math.floor(emptyIndex / size);
+    const emptyCol = emptyIndex % size;
+
+    const row = Math.floor(index / size);
+    const col = index % size;
+
+    if (Math.abs(emptyRow - row) + Math.abs(emptyCol - col) === 1) {
+        [tiles[index], tiles[emptyIndex]] = [tiles[emptyIndex], tiles[index]];
+        render();
+    }
+}
+
+/* SHUFFLE */
+function shuffle() {
+    do {
+        for (let i = tiles.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [tiles[i], tiles[j]] = [tiles[j], tiles[i]];
+        }
+    } while (!isSolvable());
+
+    document.getElementById("message").innerText = "";
+    render();
+}
+
+/* SOLVABLE */
+function isSolvable() {
+    let arr = tiles.filter(x => x !== null);
+    let inv = 0;
+
+    for (let i = 0; i < arr.length; i++) {
+        for (let j = i + 1; j < arr.length; j++) {
+            if (arr[i] > arr[j]) inv++;
+        }
+    }
+    return inv % 2 === 0;
+}
+
+/* WIN */
+function checkWin() {
+    for (let i = 0; i < tiles.length - 1; i++) {
+        if (tiles[i] !== i + 1) return;
+    }
+
+    if (tiles[tiles.length - 1] === null) {
+        document.getElementById("message").innerText =
+            "🎉 Congratulations! Dahil jan mag send kana ng birthday greetings saakin! 😸🎂";
+
+        triggerWinEffects();
+    }
+}
+
+/* CONFETTI + MUSIC SWITCH */
+function triggerWinEffects() {
+    confetti({
+        particleCount: 200,
+        spread: 120,
+        origin: { y: 0.6 }
+    });
+
+    document.getElementById("bgMusic").pause();
+    document.getElementById("birthdayMusic").play();
+}
+</script>
+
+</body>
+</html>
